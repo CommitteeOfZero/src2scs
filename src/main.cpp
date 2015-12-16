@@ -211,7 +211,6 @@ int main(int argc, char **argv)
 		ofs.flush();
 	}
 
-	system("pause");
 	ofs.close();
 	return 0;
 }

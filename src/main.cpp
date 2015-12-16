@@ -60,6 +60,8 @@ int main(int argc, char **argv)
 			c = ss.get();
 			if (c == '/') // Single line comment
 			{
+				if (label)
+					ofs << '\t';
 				ofs << "//";
 				while (ss)
 				{
@@ -72,6 +74,8 @@ int main(int argc, char **argv)
 			}
 			else if (c == '*') // Multi line comment
 			{
+				if (label)
+					ofs << '\t';
 				ofs << "/*";
 				while (ss)
 				{
@@ -83,6 +87,10 @@ int main(int argc, char **argv)
 							break;
 					}
 					ofs << c;
+					if (c == '\r')
+						c = ss.get();
+					if (islinefeed(c) && label)
+						ofs << '\t';
 				}
 				ofs << "*/";
 				ofs << '\n';

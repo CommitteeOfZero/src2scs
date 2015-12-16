@@ -67,7 +67,12 @@ int main(int argc, char **argv)
 				{
 					c = ss.get();
 					if (islinefeed(c))
+					{
+						while (ss && islinefeed(c))
+							c = ss.get();
+						ss.unget();
 						break;
+					}
 					ofs << c;
 				}
 				ofs << '\n';
@@ -87,10 +92,14 @@ int main(int argc, char **argv)
 							break;
 					}
 					ofs << c;
-					if (c == '\r')
-						c = ss.get();
 					if (islinefeed(c) && label)
 						ofs << '\t';
+					if (islinefeed(c))
+					{
+						while (islinefeed(c))
+							c = ss.get();
+						ss.unget();
+					}
 				}
 				ofs << "*/";
 				ofs << '\n';
@@ -104,7 +113,7 @@ int main(int argc, char **argv)
 			int argc = 0;
 			std::string func;
 			std::vector<std::string> argv;
-			
+			argv.push_back("");
 			c = ss.get();
 
 			// get command name
@@ -120,23 +129,18 @@ int main(int argc, char **argv)
 			while (ss && !islinefeed(c))
 			{
 				argv.push_back("");
-				while (ss && isspace(c))
-					c = ss.get();
-				ss.unget();
-
+				if (isspace(c))
+				{
+					while (ss && isspace(c))
+						c = ss.get();
+					ss.unget();
+				}
+				c = ss.get();
 				while (ss && c != ',' && !islinefeed(c))
 				{
-					c = ss.get();
-					if (c == ',')
-					{
-						argv.push_back("");
-						argc++;
-						c = ss.get();
-						while (ss && isspace(c) && !islinefeed(c))
-							c = ss.get();
-					}
 					if (!islinefeed(c))
 						argv[argc].push_back(c);
+					c = ss.get();
 				}
 				argc++;
 			}
@@ -161,33 +165,53 @@ int main(int argc, char **argv)
 				argc = 0;
 				func = argv[0] + " = " + argv[1] + ';';
 			}
+			else if (!func.compare("add"))
+			{
+				argc = 0;
+				func = argv[0] + " += " + argv[1] + ';';
+			}
+			else if (!func.compare("sub"))
+			{
+				argc = 0;
+				func = argv[0] + " -= " + argv[1] + ';';
+			}
 			else if (!func.compare("return") || !func.compare("end"))
+			{
 				label = false;
+			}
 
 			// write to file
 			ofs << func.c_str();
-			if (argc > 0) ofs << " ";
-			for (int i = 0; i < argc; i++)
+			if (argc > 0)
 			{
-				if (i > 0)
-					ofs << ", ";
-				ofs << argv[i].c_str();
+				ofs << " ";
+				for (int i = 0; i < argc; i++)
+				{
+					if (i > 0)
+						ofs << ", ";
+					ofs << argv[i].c_str();
+				}
 			}
 			ofs << '\n';
 		}
 
 		default: // other stuff (even, dd, dw, db)
-			while (ss)
+			if (islinefeed(c))
+				break;
+			if (label)
+				ofs << '\t';
+			while (ss && !islinefeed(c))
 			{
-				if (islinefeed(c))
-					break;
 				ofs << c;
 				c = ss.get();
 			}
+			ofs << '\n';
 			break;
 		}
+		ofs.flush();
 	}
 
+	system("pause");
 	ofs.close();
 	return 0;
 }

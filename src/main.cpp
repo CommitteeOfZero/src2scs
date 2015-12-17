@@ -1,6 +1,8 @@
 // SRC2SCS
 // 5pb SRC to SCS converter
-
+//
+// Copyright Benjamin Moir 2015
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -49,7 +51,7 @@ int main(int argc, char **argv)
 		}
 		else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version"))
 		{
-			printf("src2scs v1.1");
+			printf("src2scs v1.1\n");
 			return 0;
 		}
 		else if (!strcmp(argv[i], "-i") || !strcmp(argv[i], "--input"))
@@ -129,8 +131,7 @@ int main(int argc, char **argv)
 						ss.unget();
 					}
 				}
-				ofs << "*/";
-				ofs << '\n';
+				ofs << "*/\n";
 			}
 			else
 				ss.unget();
@@ -249,7 +250,7 @@ int main(int argc, char **argv)
 			ofs << func.c_str();
 			if (argc > 0)
 			{
-				ofs << " ";
+				ofs << ' ';
 				for (int i = 0; i < argc; i++)
 				{
 					if (i > 0)
@@ -260,20 +261,66 @@ int main(int argc, char **argv)
 			ofs << '\n';
 		}
 
-		default: // other stuff (even, dd, dw, db)
+		default: // other stuff (even, dd, dw, db, STRING)
 			if (islinefeed(c))
 				break;
-			if (label)
-				ofs << tab.c_str();
+			int argc = 0;
+			std::string func;
+			std::vector<std::string> argv;
+			argv.push_back("");
+
+			// get command name
+			while (ss && isspace(c))
+				c = ss.get();
+			while (ss && (isalnum(c) || c == '_'))
+			{
+				func.push_back(c);
+				c = ss.get();
+			}
+
+			// get arguments (if any)
 			while (ss && !islinefeed(c))
 			{
-				ofs << c;
+				argv.push_back("");
+				if (isspace(c))
+				{
+					while (ss && isspace(c))
+						c = ss.get();
+					ss.unget();
+				}
 				c = ss.get();
+				while (ss && !islinefeed(c) && c != ',')
+				{
+					if (isspace(c) && !islinefeed(c))
+					{
+						while (isspace(c) && !islinefeed(c))
+							c = ss.get();
+						ss.unget();
+					}
+					if (!islinefeed(c) && c != ',')
+						argv[argc].push_back(c);
+					c = ss.get();
+				}
+				argc++;
+			}
+
+			// write to file
+			if (label && func.compare("even")) ofs << tab.c_str();
+			if (!func.compare("even")) ofs << '\n';
+			ofs << func.c_str();
+			if (argc > 0)
+			{
+				ofs << ' ';
+				for (int i = 0; i < argc; i++)
+				{
+					if (i > 0)
+						ofs << ", ";
+					ofs << argv[i].c_str();
+				}
 			}
 			ofs << '\n';
 			break;
 		}
-		ofs.flush();
 	}
 
 	ofs.close();

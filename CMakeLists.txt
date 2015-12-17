@@ -9,6 +9,7 @@ endif()
 
 add_definitions(-DUNICODE)
 add_definitions(-D_UNICODE)
+find_package(Boost REQUIRED)
 
 include_directories(
 	${Boost_INCLUDE_DIR}

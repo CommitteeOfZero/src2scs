@@ -18,6 +18,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <boost/algorithm/string/replace.hpp>
 
 bool islinefeed(int c)
 {
@@ -178,6 +179,18 @@ int main(int argc, char **argv)
 			else if (!func.compare("return") || !func.compare("end"))
 			{
 				label = false;
+			}
+			else if (!func.compare("mes"))
+			{
+				boost::replace_all(argv[0], "%", "\\");
+				boost::replace_all(argv[0], "\"", "\\\"");
+				argv[0] = '"' + argv[0] + '"';
+			}
+			else if (!func.compare("mes2v"))
+			{
+				boost::replace_all(argv[3], "%", "\\");
+				boost::replace_all(argv[3], "\"", "\\\"");
+				argv[3] = '"' + argv[3] + '"';
 			}
 
 			// write to file

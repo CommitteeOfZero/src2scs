@@ -18,7 +18,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string.hpp>
 
 bool islinefeed(int c)
 {
@@ -32,17 +32,44 @@ std::string trim_extension(std::string str)
 
 int main(int argc, char **argv)
 {
-	// no args?
-	if (argc <= 1)
+	std::string input, output;
+	std::string tab = "\t";
+
+	for (int i = 1; i < argc; i++)
 	{
-		printf("Usage: src2scs input.src [output.scs]\n");
-		return 0;
+		if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help"))
+		{
+			printf("usage: src2scs -i input.src [parameters]\n\n");
+			printf(" -h, --help\t\tPrints usage information and exits.\n");
+			printf(" -v, --version\t\tPrints version and exits.\n");
+			printf(" -i, --input file.src\tSpecifies input file.\n");
+			printf(" -o, --output file.scs\tSpecifies output file.\n");
+			printf(" -st, --space-tab\tUses four spaces instead of the tab character for indentation.\n");
+			return 0;
+		}
+		else if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version"))
+		{
+			printf("src2scs v1.1");
+			return 0;
+		}
+		else if (!strcmp(argv[i], "-i") || !strcmp(argv[i], "--input"))
+		{
+			input = argv[i + 1];
+			output = trim_extension(input) + ".scs";
+		}
+		else if (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--output"))
+		{
+			output = argv[i + 1];
+		}
+		else if (!strcmp(argv[i], "-st") || !strcmp(argv[i], "--space-tab"))
+		{
+			tab = "    ";
+		}
 	}
 
 	// load script file
-	std::string newfile = argc <= 2 ? trim_extension(argv[1]) + ".scs" : argv[2];
-	std::ifstream ifs(argv[1], std::ios::binary);
-	std::ofstream ofs(newfile, std::ios::binary);
+	std::ifstream ifs(input, std::ios::binary);
+	std::ofstream ofs(output, std::ios::binary);
 	std::string contents((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 	std::istringstream ss(contents + '\n');
 	ifs.close();
@@ -62,7 +89,7 @@ int main(int argc, char **argv)
 			if (c == '/') // Single line comment
 			{
 				if (label)
-					ofs << '\t';
+					ofs << tab.c_str();
 				ofs << "//";
 				while (ss)
 				{
@@ -81,7 +108,7 @@ int main(int argc, char **argv)
 			else if (c == '*') // Multi line comment
 			{
 				if (label)
-					ofs << '\t';
+					ofs << tab.c_str();
 				ofs << "/*";
 				while (ss)
 				{
@@ -94,7 +121,7 @@ int main(int argc, char **argv)
 					}
 					ofs << c;
 					if (islinefeed(c) && label)
-						ofs << '\t';
+						ofs << tab.c_str();
 					if (islinefeed(c))
 					{
 						while (islinefeed(c))
@@ -148,7 +175,7 @@ int main(int argc, char **argv)
 
 			// indentation
 			if (label && func.compare("label") && func.compare("include"))
-				ofs << '\t';
+				ofs << tab.c_str();
 
 			// special cases
 			if (!func.compare("label"))
@@ -192,6 +219,28 @@ int main(int argc, char **argv)
 				boost::replace_all(argv[3], "\"", "\\\"");
 				argv[3] = '"' + argv[3] + '"';
 			}
+			else if (!func.compare("call"))
+			{
+				if (!argv[0].compare("THIS"))
+				{
+					argc = 1;
+					argv[0] = argv[1];
+				}
+				else
+				{
+					// I don't know how correct this is
+					// the SCRBUF_ things are #defines from
+					// the SCR headers. So SCRBUF_* isn't guaranteed to exist.
+					func = "CallFar";
+					argv[1] = '[' + argv[0] + ']' + argv[1];
+					argv[0] = "SCRBUF_" + argv[0];
+					boost::to_upper(argv[0]);
+				}
+			}
+
+			// capitalize first character of func, if necessary
+			if (func.compare("include") && func.compare("halt"))
+				func[0] = toupper(func[0]);
 
 			// write to file
 			ofs << func.c_str();
@@ -212,7 +261,7 @@ int main(int argc, char **argv)
 			if (islinefeed(c))
 				break;
 			if (label)
-				ofs << '\t';
+				ofs << tab.c_str();
 			while (ss && !islinefeed(c))
 			{
 				ofs << c;

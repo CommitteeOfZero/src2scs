@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 			c = ss.get();
 
 			// get command name
-			while (ss && isspace(c))
+			while (ss && isspace(c) && !islinefeed(c))
 				c = ss.get();
 			while (ss && (isalnum(c) || c == '_'))
 			{
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
 			argv.push_back("");
 
 			// get command name
-			while (ss && isspace(c))
+			while (ss && isspace(c) && !islinefeed(c))
 				c = ss.get();
 			while (ss && (isalnum(c) || c == '_'))
 			{
@@ -284,9 +284,9 @@ int main(int argc, char **argv)
 			while (ss && !islinefeed(c))
 			{
 				argv.push_back("");
-				if (isspace(c))
+				if (isspace(c) && !islinefeed(c))
 				{
-					while (ss && isspace(c))
+					while (ss && isspace(c) && !islinefeed(c))
 						c = ss.get();
 					ss.unget();
 				}

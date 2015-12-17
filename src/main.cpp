@@ -239,8 +239,11 @@ int main(int argc, char **argv)
 			}
 
 			// capitalize first character of func, if necessary
-			if (func.compare("include") && func.compare("halt"))
+			if (func.compare("halt") && func.compare("jump") && func.compare("return")
+				&& func.compare("end") && func.compare("wait"))
+			{
 				func[0] = toupper(func[0]);
+			}
 
 			// write to file
 			ofs << func.c_str();

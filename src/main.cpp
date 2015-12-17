@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 
 			// capitalize first character of func, if necessary
 			if (func.compare("halt") && func.compare("jump") && func.compare("return")
-				&& func.compare("end") && func.compare("wait"))
+				&& func.compare("end") && func.compare("wait") && func.compare("mwait"))
 			{
 				func[0] = toupper(func[0]);
 			}
